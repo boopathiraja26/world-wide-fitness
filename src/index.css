@@ -1,5 +1,17 @@
 @import "tailwindcss";
 
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
 html {
   scroll-behavior: smooth;
+}
+
+body {
+  background-color: #000;
+  color: #fff;
+  overflow-x: hidden;
+  margin: 0;
+  padding: 0;
 }

@@ -1,0 +1,471 @@
+import { useEffect, useRef, useState } from 'react'
+import { gsap } from 'gsap'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
+
+gsap.registerPlugin(ScrollTrigger)
+
+const IMAGES = [
+  {
+    id: 1,
+    src: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800&q=80',
+    label: 'Main Floor',
+    size: 'wide',
+  },
+  {
+    id: 2,
+    src: 'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=800&q=80',
+    label: 'Free Weights',
+    size: 'tall',
+  },
+  {
+    id: 3,
+    src: 'https://images.unsplash.com/photo-1540497077202-7c8a3999166f?w=800&q=80',
+    label: 'Cardio Zone',
+    size: 'normal',
+  },
+  {
+    id: 4,
+    src: 'https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?w=800&q=80',
+    label: 'CrossFit Box',
+    size: 'normal',
+  },
+  {
+    id: 5,
+    src: 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=800&q=80',
+    label: 'Training Area',
+    size: 'wide',
+  },
+  {
+    id: 6,
+    src: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?w=800&q=80',
+    label: 'Yoga Studio',
+    size: 'tall',
+  },
+  {
+    id: 7,
+    src: 'https://images.unsplash.com/photo-1549060279-7e168fcee0c2?w=800&q=80',
+    label: 'PT Sessions',
+    size: 'normal',
+  },
+  {
+    id: 8,
+    src: 'https://images.unsplash.com/photo-1567013127542-490d757e51fc?w=800&q=80',
+    label: 'Elite Zone',
+    size: 'normal',
+  },
+]
+
+// Lightbox component
+function Lightbox({ image, onClose, onPrev, onNext }) {
+  const boxRef = useRef(null)
+  const imgRef = useRef(null)
+
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+      gsap.from(boxRef.current, {
+        autoAlpha: 0,
+        duration: 0.3,
+        ease: 'power2.out',
+      })
+      gsap.from(imgRef.current, {
+        autoAlpha: 0,
+        scale: 0.92,
+        duration: 0.4,
+        ease: 'power3.out',
+        delay: 0.05,
+      })
+    })
+
+    // Keyboard nav
+    const onKey = (e) => {
+      if (e.key === 'Escape')     onClose()
+      if (e.key === 'ArrowRight') onNext()
+      if (e.key === 'ArrowLeft')  onPrev()
+    }
+    window.addEventListener('keydown', onKey)
+
+    return () => {
+      ctx.revert()
+      window.removeEventListener('keydown', onKey)
+    }
+  }, [onClose, onNext, onPrev])
+
+  return (
+    <div
+      ref={boxRef}
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-md"
+      onClick={onClose}
+    >
+      {/* Close */}
+      <button
+        onClick={onClose}
+        className="absolute top-6 right-6 z-10 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors duration-200"
+        aria-label="Close lightbox"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
+          <path strokeLinecap="round" d="M6 6l12 12M6 18L18 6" />
+        </svg>
+      </button>
+
+      {/* Prev */}
+      <button
+        onClick={(e) => { e.stopPropagation(); onPrev() }}
+        className="absolute left-6 z-10 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-all duration-200 hover:-translate-x-0.5"
+        aria-label="Previous image"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15 18l-6-6 6-6" />
+        </svg>
+      </button>
+
+      {/* Next */}
+      <button
+        onClick={(e) => { e.stopPropagation(); onNext() }}
+        className="absolute right-6 z-10 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-all duration-200 hover:translate-x-0.5"
+        aria-label="Next image"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="w-5 h-5">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 18l6-6-6-6" />
+        </svg>
+      </button>
+
+      {/* Image */}
+      <div
+        ref={imgRef}
+        className="relative max-w-5xl w-full mx-16 rounded-sm overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <img
+          src={image.src}
+          alt={image.label}
+          className="w-full max-h-[80vh] object-contain"
+        />
+        <div className="absolute bottom-0 left-0 right-0 px-6 py-4 bg-gradient-to-t from-black/80 to-transparent">
+          <p className="text-white font-bold text-sm tracking-widest uppercase">
+            {image.label}
+          </p>
+          <p className="text-gray-500 text-xs mt-0.5">
+            World Wide Fitness
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Individual gallery image card
+function GalleryCard({ image, index, onClick }) {
+  const cardRef  = useRef(null)
+  const imageRef = useRef(null)
+
+  const sizeClasses = {
+    wide:   'col-span-2 row-span-1',
+    tall:   'col-span-1 row-span-2',
+    normal: 'col-span-1 row-span-1',
+  }
+
+  const heightClasses = {
+    wide:   'h-56',
+    tall:   'h-full min-h-[460px]',
+    normal: 'h-56',
+  }
+
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+
+      // Scroll reveal
+      gsap.from(cardRef.current, {
+        scrollTrigger: {
+          trigger: cardRef.current,
+          start: 'top 90%',
+        },
+        autoAlpha: 0,
+        y: 40,
+        scale: 0.96,
+        duration: 0.8,
+        ease: 'power3.out',
+        delay: (index % 4) * 0.1,
+      })
+
+      // Hover zoom
+      const card = cardRef.current
+      const img  = imageRef.current
+
+      const onEnter = () => gsap.to(img, { scale: 1.07, duration: 0.6, ease: 'power2.out' })
+      const onLeave = () => gsap.to(img, { scale: 1,    duration: 0.6, ease: 'power2.out' })
+
+      card.addEventListener('mouseenter', onEnter)
+      card.addEventListener('mouseleave', onLeave)
+
+      return () => {
+        card.removeEventListener('mouseenter', onEnter)
+        card.removeEventListener('mouseleave', onLeave)
+      }
+
+    }, cardRef)
+
+    return () => ctx.revert()
+  }, [index])
+
+  return (
+    <div
+      ref={cardRef}
+      className={`${sizeClasses[image.size]} relative overflow-hidden rounded-sm cursor-pointer group border border-white/5 hover:border-white/20 transition-colors duration-500`}
+      onClick={() => onClick(index)}
+    >
+      <div className={`relative w-full overflow-hidden ${heightClasses[image.size]}`}>
+        <img
+          ref={imageRef}
+          src={image.src}
+          alt={image.label}
+          className="w-full h-full object-cover object-center"
+        />
+
+        {/* Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent opacity-60 group-hover:opacity-90 transition-opacity duration-500" />
+
+        {/* Label */}
+        <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-1 group-hover:translate-y-0 transition-transform duration-400">
+          <p className="text-white font-black text-sm tracking-widest uppercase">
+            {image.label}
+          </p>
+          <div className="h-px w-0 group-hover:w-8 bg-red-500 mt-1.5 transition-all duration-500" />
+        </div>
+
+        {/* Zoom icon */}
+        <div className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/0 group-hover:bg-white/15 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 backdrop-blur-sm">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth={2} className="w-3.5 h-3.5">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+          </svg>
+        </div>
+
+      </div>
+    </div>
+  )
+}
+
+export default function Gallery() {
+  const sectionRef      = useRef(null)
+  const labelRef        = useRef(null)
+  const headingRef      = useRef(null)
+  const subRef          = useRef(null)
+  const scrollTrackRef  = useRef(null)
+  const progressRef     = useRef(null)
+
+  const [lightboxIndex, setLightboxIndex] = useState(null)
+
+  // Horizontal scroll strip (Apple-style pinned scroll)
+  useEffect(() => {
+    const ctx = gsap.context(() => {
+
+      // Header reveals
+      gsap.from(labelRef.current, {
+        scrollTrigger: { trigger: labelRef.current, start: 'top 85%' },
+        autoAlpha: 0, y: 20, duration: 0.6, ease: 'power3.out',
+      })
+      gsap.from(headingRef.current, {
+        scrollTrigger: { trigger: headingRef.current, start: 'top 85%' },
+        autoAlpha: 0, y: 40, duration: 0.9, ease: 'power3.out', delay: 0.1,
+      })
+      gsap.from(subRef.current, {
+        scrollTrigger: { trigger: subRef.current, start: 'top 88%' },
+        autoAlpha: 0, y: 20, duration: 0.7, ease: 'power3.out', delay: 0.15,
+      })
+
+      // Horizontal scroll strip
+      const track = scrollTrackRef.current
+      if (!track) return
+
+      const totalScroll = track.scrollWidth - track.offsetWidth
+
+      gsap.to(track, {
+        x: () => -totalScroll,
+        ease: 'none',
+        scrollTrigger: {
+          trigger: track.parentElement,
+          start: 'top top',
+          end: () => `+=${totalScroll}`,
+          scrub: 1.2,
+          pin: true,
+          anticipatePin: 1,
+          onUpdate: (self) => {
+            if (progressRef.current) {
+              progressRef.current.style.width = `${self.progress * 100}%`
+            }
+          },
+        },
+      })
+
+    }, sectionRef)
+
+    return () => ctx.revert()
+  }, [])
+
+  const openLightbox  = (index) => setLightboxIndex(index)
+  const closeLightbox = () => setLightboxIndex(null)
+  const prevImage     = () => setLightboxIndex((i) => (i - 1 + IMAGES.length) % IMAGES.length)
+  const nextImage     = () => setLightboxIndex((i) => (i + 1) % IMAGES.length)
+
+  return (
+    <>
+      <section
+        ref={sectionRef}
+        id="gallery"
+        className="relative bg-zinc-950 text-white overflow-hidden"
+      >
+
+        {/* Section header — above the pinned strip */}
+        <div className="relative max-w-7xl mx-auto px-6 pt-24 lg:pt-36 pb-12">
+
+          {/* Background */}
+          <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+          <div className="absolute top-20 right-0 w-80 h-80 bg-red-600/5 rounded-full blur-3xl pointer-events-none" />
+
+          <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
+
+            <div className="flex flex-col gap-5">
+
+              <div ref={labelRef} className="flex items-center gap-3">
+                <span className="w-8 h-px bg-red-500" />
+                <span className="text-red-500 text-xs font-bold tracking-[0.25em] uppercase">
+                  Inside The Gym
+                </span>
+              </div>
+
+              <h2
+                ref={headingRef}
+                className="font-black leading-none tracking-tight"
+                style={{ fontSize: 'clamp(2.5rem, 6vw, 5rem)' }}
+              >
+                SEE THE
+                <span
+                  className="block text-transparent"
+                  style={{ WebkitTextStroke: '1.5px rgba(255,255,255,0.8)' }}
+                >
+                  SPACE
+                </span>
+              </h2>
+
+            </div>
+
+            <div className="flex flex-col gap-4 lg:items-end">
+              <p
+                ref={subRef}
+                className="text-gray-500 text-sm leading-relaxed max-w-sm lg:text-right"
+              >
+                World-class facilities designed for serious athletes.
+                Every corner engineered for performance and focus.
+              </p>
+
+              {/* Scroll progress bar */}
+              <div className="flex items-center gap-3 lg:self-end">
+                <span className="text-gray-600 text-xs tracking-widest uppercase">Scroll</span>
+                <div className="w-32 h-px bg-white/10 relative overflow-hidden rounded-full">
+                  <div
+                    ref={progressRef}
+                    className="absolute top-0 left-0 h-full bg-red-500 transition-none rounded-full"
+                    style={{ width: '0%' }}
+                  />
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        {/* Pinned horizontal scroll container */}
+        <div className="overflow-hidden h-screen flex items-center">
+          <div
+            ref={scrollTrackRef}
+            className="flex items-center gap-5 pl-6 pr-24"
+            style={{ willChange: 'transform' }}
+          >
+            {IMAGES.map((image, index) => (
+              <div
+                key={image.id}
+                className="flex-shrink-0 cursor-pointer group relative overflow-hidden rounded-sm border border-white/5 hover:border-white/20 transition-colors duration-500"
+                style={{
+                  width: image.size === 'wide' ? '640px' : image.size === 'tall' ? '380px' : '480px',
+                  height: image.size === 'tall' ? '560px' : '420px',
+                }}
+                onClick={() => openLightbox(index)}
+              >
+                <img
+                  src={image.src}
+                  alt={image.label}
+                  className="w-full h-full object-cover object-center transition-transform duration-700 group-hover:scale-105"
+                />
+
+                {/* Overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent opacity-50 group-hover:opacity-80 transition-opacity duration-500" />
+
+                {/* Label */}
+                <div className="absolute bottom-0 left-0 right-0 p-6">
+                  <p className="text-white font-black text-sm tracking-widest uppercase translate-y-1 group-hover:translate-y-0 transition-transform duration-400">
+                    {image.label}
+                  </p>
+                  <div className="h-px w-0 group-hover:w-8 bg-red-500 mt-2 transition-all duration-500" />
+                </div>
+
+                {/* Index number */}
+                <div className="absolute top-5 left-5">
+                  <span className="text-white/20 font-black text-4xl leading-none select-none">
+                    {String(image.id).padStart(2, '0')}
+                  </span>
+                </div>
+
+                {/* Zoom icon */}
+                <div className="absolute top-5 right-5 w-9 h-9 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 border border-white/20">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth={2} className="w-4 h-4">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+                  </svg>
+                </div>
+
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Mobile grid fallback — shown only on small screens */}
+        <div className="lg:hidden px-6 pb-16">
+          <p className="text-gray-600 text-xs tracking-widest uppercase mb-6 text-center">
+            Our Facilities
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            {IMAGES.map((image, index) => (
+              <div
+                key={image.id}
+                className="relative rounded-sm overflow-hidden aspect-square cursor-pointer"
+                onClick={() => openLightbox(index)}
+              >
+                <img
+                  src={image.src}
+                  alt={image.label}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-black/40" />
+                <p className="absolute bottom-2 left-2 text-white text-xs font-bold tracking-widest uppercase">
+                  {image.label}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Section bottom border */}
+        <div className="absolute bottom-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+
+      </section>
+
+      {/* Lightbox */}
+      {lightboxIndex !== null && (
+        <Lightbox
+          image={IMAGES[lightboxIndex]}
+          onClose={closeLightbox}
+          onPrev={prevImage}
+          onNext={nextImage}
+        />
+      )}
+    </>
+  )
+}

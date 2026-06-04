@@ -2,11 +2,13 @@ import { useState } from 'react'
 import useScrolled from '../../hooks/useScrolled'
 
 const NAV_LINKS = [
-  { label: 'Programs', href: '#programs' },
-  { label: 'Trainers', href: '#trainers' },
-  { label: 'Pricing',  href: '#pricing'  },
-  { label: 'Gallery',  href: '#gallery'  },
-  { label: 'Contact',  href: '#contact'  },
+  { label: 'About',       href: '#about'        },
+  { label: 'Services',    href: '#services'      },
+  { label: 'Membership',  href: '#pricing'       },
+  { label: 'Trainers',    href: '#trainers'      },
+  { label: 'Gallery',     href: '#gallery'       },
+  { label: 'Testimonials',href: '#testimonials'  },
+  { label: 'Contact',     href: '#contact'       },
 ]
 
 function smoothScroll(e, href) {
